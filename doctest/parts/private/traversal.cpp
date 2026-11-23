@@ -55,14 +55,10 @@ bool TraversalState::advance() {
 bool TraversalState::tryEnterSubcase(const SubcaseSignature &signature) {
     DecisionPoint &point = ensureDecisionPointAtCurrentDepth();
     std::vector<SubcaseSignature> &subcases = point.subcases;
-    size_t siblingIndex = 0;
+    const auto result = point.subcase_indexes.emplace(signature, subcases.size());
+    const size_t siblingIndex = result.first->second;
 
-    for (; siblingIndex < subcases.size(); ++siblingIndex) {
-        if (subcases[siblingIndex] == signature)
-            break;
-    }
-
-    if (siblingIndex == subcases.size())
+    if (result.second)
         subcases.push_back(signature);
 
     point.branch_count = subcases.size();
