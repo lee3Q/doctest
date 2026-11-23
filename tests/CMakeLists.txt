@@ -123,6 +123,9 @@ doctest_add_unit_test(          SOURCE regression/test.782.cpp)
 doctest_add_unit_test(WITH_MAIN SOURCE regression/test.786.cpp)
 doctest_add_unit_test(          SOURCE regression/test.873.cpp)
 doctest_add_unit_test(WITH_MAIN SOURCE regression/test.915.cpp)
+doctest_add_unit_test(
+    WITH_MAIN SOURCE regression/test.1214.cpp
+    DEFINES __wasi__ __wasm_exception_handling__)
 
 set_tests_properties(
     regression/test.782.cpp
