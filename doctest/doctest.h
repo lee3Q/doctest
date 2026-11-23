@@ -4107,6 +4107,7 @@ DOCTEST_SUPPRESS_PRIVATE_WARNINGS_POP
 #define DOCTEST_PARTS_PRIVATE_TRAVERSAL
 
 
+#include <unordered_map>
 #include <vector>
 
 DOCTEST_SUPPRESS_PRIVATE_WARNINGS_PUSH
@@ -4116,11 +4117,27 @@ DOCTEST_SUPPRESS_PRIVATE_WARNINGS_PUSH
 namespace doctest {
 namespace detail {
 
+struct SubcaseSignatureHash {
+    size_t operator()(const SubcaseSignature &signature) const noexcept {
+        size_t hash = 5381;
+        for (const unsigned char *character = reinterpret_cast<const unsigned char *>(signature.m_file); *character;
+             ++character)
+            hash = ((hash << 5) + hash) ^ *character;
+        for (const unsigned char *character = reinterpret_cast<const unsigned char *>(signature.m_name.c_str()); *character;
+             ++character)
+            hash = ((hash << 5) + hash) ^ *character;
+        hash = ((hash << 5) + hash) ^ static_cast<size_t>(signature.m_line);
+        return hash;
+    }
+};
+
 struct DecisionPoint {
     // Number of branches available at this depth for the current traversal path.
     size_t branch_count = 0;
     // Encountered sibling subcases in source order for subcase decision points.
     std::vector<SubcaseSignature> subcases;
+    // Indexes signatures so sibling lookup does not scan the source-order list.
+    std::unordered_map<SubcaseSignature, size_t, SubcaseSignatureHash> subcase_indexes;
 };
 
 class TraversalState {
@@ -8871,14 +8888,10 @@ bool TraversalState::advance() {
 bool TraversalState::tryEnterSubcase(const SubcaseSignature &signature) {
     DecisionPoint &point = ensureDecisionPointAtCurrentDepth();
     std::vector<SubcaseSignature> &subcases = point.subcases;
-    size_t siblingIndex = 0;
+    const auto result = point.subcase_indexes.emplace(signature, subcases.size());
+    const size_t siblingIndex = result.first->second;
 
-    for (; siblingIndex < subcases.size(); ++siblingIndex) {
-        if (subcases[siblingIndex] == signature)
-            break;
-    }
-
-    if (siblingIndex == subcases.size())
+    if (result.second)
         subcases.push_back(signature);
 
     point.branch_count = subcases.size();
