@@ -380,7 +380,8 @@ DOCTEST_SUPPRESS_PUBLIC_WARNINGS_PUSH
 #endif // DOCTEST_CONFIG_NO_POSIX_SIGNALS
 
 #ifndef DOCTEST_CONFIG_NO_EXCEPTIONS
-#if !defined(__cpp_exceptions) && !defined(__EXCEPTIONS) && !defined(_CPPUNWIND) || defined(__wasi__)
+#if (!defined(__cpp_exceptions) && !defined(__EXCEPTIONS) && !defined(_CPPUNWIND)) || \
+    (defined(__wasi__) && !defined(__wasm_exception_handling__))
 #define DOCTEST_CONFIG_NO_EXCEPTIONS
 #endif // no exceptions
 #endif // DOCTEST_CONFIG_NO_EXCEPTIONS
